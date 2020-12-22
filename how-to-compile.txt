@@ -1,0 +1,16 @@
+0- Go in the build folder
+
+mkdir build && cd build
+
+1- Install the conan dependencies
+
+conan install ..
+
+2- Generate the projects with cmake, for instance
+
+cmake .. -G "Visual Studio 15 Win64"
+
+3- Compile the desired target, for instance
+
+cmake --build . --config Release 
+(OR a specific project like this : cmake --build memory_management/003_memory_pool_and_fragmentation/ --config RelWithDebInfo)

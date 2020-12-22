@@ -1,0 +1,24 @@
+cmake_minimum_required(VERSION 3.10.0)
+
+project(app C CXX)
+
+file(GLOB SOURCE_FILES 
+    "*.cpp"
+    "*.h"
+)
+
+add_executable(${PROJECT_NAME} ${SOURCE_FILES})
+
+target_link_libraries(${PROJECT_NAME} TaskThreadsEngine)
+
+set_target_properties(${PROJECT_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+
+set_property(TARGET ${PROJECT_NAME} PROPERTY VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
+set_property(TARGET ${PROJECT_NAME} PROPERTY DEBUG_OUTPUT_NAME "${PROJECT_NAME}_dx")
+set_property(TARGET ${PROJECT_NAME} PROPERTY RELEASE_OUTPUT_NAME "${PROJECT_NAME}_qx")
+set_property(TARGET ${PROJECT_NAME} PROPERTY RELWITHDEBINFO_OUTPUT_NAME "${PROJECT_NAME}_rx")
+set_property(TARGET ${PROJECT_NAME} PROPERTY MINSIZEREL_OUTPUT_NAME "${PROJECT_NAME}_fx")
+             
+set(${PROJECT_NAME}_INCLUDE_DIRS    ${PROJECT_SOURCE_DIR}
+                                    ${TaskThreadsEngine_INCLUDE_DIRS}
+    CACHE INTERNAL "${PROJECT_NAME}: Include Directories" FORCE)
