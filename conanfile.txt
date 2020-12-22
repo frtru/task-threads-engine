@@ -1,5 +1,6 @@
 [requires]
 catch2/2.13.1
+tbb/2020.3
 
 [generators]
 cmake

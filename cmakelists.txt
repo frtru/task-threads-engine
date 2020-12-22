@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.10.0)
 
-project(task-threads-engine)
+project(task-threads-engine C CXX)
 
 # ----- You can tweak some common (for all subprojects) stuff here. -----
 
@@ -22,7 +22,7 @@ endif ()
 include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
 conan_basic_setup()
 
-include_directories(${CONAN_INCLUDE_DIRS})
+include_directories(${CONAN_INCLUDE_DIRS} .)
 
 set(PROJECT_ROOT_PATH ${PROJECT_SOURCE_DIR} 
     CACHE FILEPATH "PROJECT_ROOT_PATH: Project root path..." FORCE)                    
