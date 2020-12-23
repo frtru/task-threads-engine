@@ -5,5 +5,5 @@
 #include "catch2/catch.hpp"
 
 TEST_CASE("The projects properly link and compile", "[Setup]") {
-  REQUIRE(os::threading::A::foo());
+  REQUIRE(engine::threading::A::foo());
 }

@@ -1,6 +1,6 @@
 #pragma once
 
-namespace os { namespace threading {
+namespace engine { namespace threading {
 class A
 {
 public:
@@ -12,5 +12,5 @@ protected:
 private:
 
 };
-}; // namespace threading
-}; // namespace os
+} // namespace engine
+} // namespace os

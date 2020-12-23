@@ -1,6 +1,6 @@
 #include "TaskThreadsEngine.h"
 
-using namespace os::threading;
+using namespace engine::threading;
 
 A::A()
 {
