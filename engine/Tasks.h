@@ -1,7 +1,6 @@
 #pragma once
 
 #include <functional>
-#include <future>
 #include <memory>
 #include <queue>
 
