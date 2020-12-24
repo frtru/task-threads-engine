@@ -47,9 +47,21 @@ struct Task : ITask {
     : ITask(prio) {}
   virtual ~Task() override {}
 
+  // We wrap the function and arguments passed
+  // into a a pointer for std::function<void()>.
+  // This is pointer is copied as a capture in 
+  // the member variable that will then execute
+  // the actual function.
+  //
+  // Were we interested of getting the actual
+  // return of the functions, we could use a 
+  // std::packaged_task instead of the std::function
+  // and return a future of the result of that func.
+  // This voluntarily doesn't manage this case as
+  // it eases the design.
   template <typename F, typename... Args>
   void Bind(F&& func, Args&&... args) {
-    auto task = std::make_shared< std::packaged_task<void()> >(
+    auto task = std::make_shared< std::function<void()> >(
       std::bind(
         std::forward<F>(func), std::forward<Args>(args)...
       )
@@ -71,7 +83,7 @@ struct MacroTask : ITask {
     : ITask(prio) {}
 
   virtual ~MacroTask() {}
-  // Simple enough, we got through the order they were added.
+  // Simple enough, we go through the order they were added.
   // The priority_queue sorts them when adding them already
   // and with the normal queue we just have to go through the
   // order they were added
