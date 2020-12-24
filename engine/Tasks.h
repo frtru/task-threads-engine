@@ -1,56 +1,73 @@
 #pragma once
 
+#include <functional>
+#include <future>
 #include <memory>
 #include <queue>
 
 namespace engine { namespace threading {
 
-struct ITask {
-  enum Priority : unsigned char {
-    IDLE,
-    LOW,
-    MEDIUM,
-    HIGH,
-    CRITICAL
-  };
+enum TaskPriority : unsigned char {
+  IDLE,
+  LOW,
+  MEDIUM,
+  HIGH,
+  CRITICAL
+};
 
-  ITask(Priority prio = Priority::MEDIUM)
+struct ITask {
+  ITask(TaskPriority prio = TaskPriority::MEDIUM)
     : m_prio(prio) {}
   virtual ~ITask() {}
 
   virtual void Run() = 0;
 
-  Priority m_prio;
+  TaskPriority m_prio;
 };
 
-using TaskPtr = std::unique_ptr<ITask>;
+using BaseTaskPtr = std::unique_ptr<ITask>;
+
 struct PriorityComparison
 {
-  bool operator()(const TaskPtr& lhs, const TaskPtr& rhs) {
-    return lhs->m_prio > rhs->m_prio;
+  bool operator()(const BaseTaskPtr& lhs, const BaseTaskPtr& rhs) {
+    return lhs->m_prio < rhs->m_prio;
   }
 };
 using PriorityTaskQueue = std::priority_queue<
-  TaskPtr,
-  std::deque<TaskPtr>,
+  BaseTaskPtr,
+  std::deque<BaseTaskPtr>,
   PriorityComparison
 >;
 using TaskQueue = std::queue<
-  TaskPtr
+  BaseTaskPtr
 >;
 
 struct Task : ITask {
-  Task(Priority prio = Priority::MEDIUM)
+  Task(TaskPriority prio = TaskPriority::MEDIUM)
     : ITask(prio) {}
   virtual ~Task() override {}
 
-  virtual void Run() override {}
+  template <typename F, typename... Args>
+  void Bind(F&& func, Args&&... args) {
+    auto task = std::make_shared< std::packaged_task<void()> >(
+      std::bind(
+        std::forward<F>(func), std::forward<Args>(args)...
+      )
+    );
+    m_proc = [task](){ (*task)(); };
+  } 
+
+  virtual void Run() override { m_proc(); }
+
+  std::function<void()> m_proc;
 };
+
+using TaskPtr = std::unique_ptr<Task>;
 
 template <typename QueueType = TaskQueue>
 struct MacroTask : ITask {
 
-  MacroTask(Priority prio = Priority::MEDIUM)
+  MacroTask(TaskPriority prio = TaskPriority::MEDIUM)
     : ITask(prio) {}
 
   virtual ~MacroTask() {}
@@ -70,11 +87,21 @@ struct MacroTask : ITask {
     }
   }
   
-  void Add(TaskPtr task) { 
+  void Add(BaseTaskPtr task) { 
+    m_queue.emplace(std::move(task));
+  }
+
+  template <typename F, typename... Args>
+  void Add(TaskPriority prio, F&& func, Args&&... args) {
+    TaskPtr task(new Task(prio));
+    task->Bind(func, args...);
     m_queue.emplace(std::move(task));
   }
 
   QueueType m_queue;
 };
+
+using PriorityMacroTaskPtr = std::unique_ptr<MacroTask<PriorityTaskQueue>>;
+using MacroTaskPtr = std::unique_ptr<MacroTask<TaskQueue>>;
 }
 }
