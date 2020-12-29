@@ -32,10 +32,8 @@ int main(int argc, char* argv[])
   task.Add(std::move(realTask));
   task.Add(TaskPriority::HIGH, baz, "in baz");
 
-  task.Run();
 
-
-
+  TaskEngine::GetInstance().LaunchTask(BaseTaskPtr(&task));
 
   return 0;
 }
