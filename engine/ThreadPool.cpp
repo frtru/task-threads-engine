@@ -2,20 +2,42 @@
 
 using namespace engine::threading;
 
-ThreadPool::ThreadPool(unsigned int poolSize) {
+bool ThreadPool::WorkerThread::s_stop = false;
 
+void ThreadPool::WorkerThread::Start() {
+  m_thread = std::make_unique<std::thread>([this]() {
+    for (;;) {
+      BaseTaskPtr task;
+      {
+        std::unique_lock<std::mutex> lock(this->m_queueMutex);
+        this->m_condition.wait(lock, [this]() {
+          return !m_tasks.empty() || s_stop;
+        });
+        if (this->s_stop)
+          return;
+        task = std::move(this->m_tasks.front());
+        this->m_tasks.pop();
+      }
+
+      task->Run();
+    }
+  });
 }
 
-ThreadPool::~ThreadPool() {
-
+ThreadPool::WorkerThread::~WorkerThread() {
+  {
+    std::unique_lock<std::mutex> lock(this->m_queueMutex);
+    s_stop = true;
+  }
+  m_condition.notify_all();
+  m_thread->join();
 }
 
-ThreadPool::ThreadPool(ThreadPool&& other) noexcept {
-
-}
-
-ThreadPool& ThreadPool::operator=(ThreadPool&& other) noexcept {
-
+ThreadPool::ThreadPool(unsigned int poolSize)
+  : m_workers(poolSize) {
+  for (WorkerThread& worker : m_workers) {
+    worker.Start();
+  }
 }
 
 void ThreadPool::Scheduler::AssignTaskToThread(BaseTaskPtr&& task) {
@@ -26,13 +48,14 @@ void ThreadPool::Scheduler::AssignTaskToThread(BaseTaskPtr&& task) {
   // Otherwise we would need to lock ALL the mutexes which would
   // create a lot of contention and horrible performance.
   auto it = std::min_element(
-    m_poolRef->m_threads.begin(),
-    m_poolRef->m_threads.end(),
-    [](Thread& t1, Thread& t2) {
-      t1.m_tasks.size() < t2.m_tasks.size();
+    m_poolRef->m_workers.begin(),
+    m_poolRef->m_workers.end(),
+    [](WorkerThread& t1, WorkerThread& t2) {
+      return t1.m_tasks.size() < t2.m_tasks.size();
     }
   );
 
   std::unique_lock<std::mutex> lock(it->m_queueMutex);
-  it->m_tasks.emplace(task);
+  it->m_tasks.emplace(std::move(task));
+  it->m_condition.notify_one();
 }

@@ -1,4 +1,4 @@
-#include "engine/TaskThreadsEngine.h"
+#include "engine/TaskEngine.h"
 #include "engine/Tasks.h"
 
 #include <iostream>
@@ -23,19 +23,19 @@ struct Yahoo
 
 int main(int argc, char* argv[])
 {
-  std::cout << A::foo() << std::endl;
+  MacroTask<PriorityTaskQueue> task(TaskPriority::HIGH); // Weird that it still requires empty braces even though I'm using C++17
 
-  {
-    MacroTask<PriorityTaskQueue> task(TaskPriority::HIGH); // Weird that it still requires empty braces even though I'm using C++17
+  Yahoo y;
 
-    Yahoo y;
+  TaskPtr realTask = TaskPtr(new Task(TaskPriority::MEDIUM));
+  realTask->Bind(&Yahoo::Bar, &y, 1.23f, "string");
+  task.Add(std::move(realTask));
+  task.Add(TaskPriority::HIGH, baz, "in baz");
 
-    TaskPtr realTask = TaskPtr(new Task(TaskPriority::MEDIUM));
-    realTask->Bind(&Yahoo::Bar, &y, 1.23f, "string");
-    task.Add(std::move(realTask));
-    task.Add(TaskPriority::HIGH, baz, "in baz");
+  task.Run();
 
-    task.Run();
-  }
+
+
+
   return 0;
 }

@@ -9,13 +9,6 @@
 
 namespace engine { namespace threading {
 
-struct Thread
-{
-  std::thread m_thread;
-  std::queue<BaseTaskPtr> m_tasks;
-  std::mutex m_queueMutex;
-};
-
 class ThreadPool
 {
   class Scheduler
@@ -30,22 +23,32 @@ class ThreadPool
     ThreadPool* m_poolRef;
   };
 
+  struct WorkerThread
+  {
+    WorkerThread() = default;
+    ~WorkerThread();
+
+    WorkerThread(const WorkerThread& other) = delete;
+    WorkerThread& operator=(const WorkerThread& other) = delete;
+
+    void Start();
+
+    std::unique_ptr<std::thread> m_thread;
+    std::condition_variable      m_condition;
+    std::queue<BaseTaskPtr>      m_tasks;
+    std::mutex                   m_queueMutex;
+    static bool                  s_stop;
+  };
+
 public:
   ThreadPool(unsigned int poolSize = std::thread::hardware_concurrency());
-  ~ThreadPool();
-
-  ThreadPool(const ThreadPool& other) = delete;
-  ThreadPool(ThreadPool&& other) noexcept;
-
-  ThreadPool& operator=(const ThreadPool& other) = delete;
-  ThreadPool& operator=(ThreadPool&& other) noexcept;
 
   void EnqueueTask(BaseTaskPtr&& task) {
     m_scheduler->AssignTaskToThread(std::move(task));
   }
 
 private:
-  std::vector<Thread> m_threads;
+  std::vector<WorkerThread> m_workers;
   std::unique_ptr<Scheduler> m_scheduler;
 };
 } // namespace threading
