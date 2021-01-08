@@ -23,17 +23,25 @@ struct Yahoo
 
 int main(int argc, char* argv[])
 {
-  MacroTask<PriorityTaskQueue> task(TaskPriority::HIGH); // Weird that it still requires empty braces even though I'm using C++17
 
   Yahoo y;
 
   TaskPtr realTask = TaskPtr(new Task(TaskPriority::MEDIUM));
   realTask->Bind(&Yahoo::Bar, &y, 1.23f, "string");
+
+  MacroTask<PriorityTaskQueue> task(TaskPriority::HIGH);
   task.Add(std::move(realTask));
   task.Add(TaskPriority::HIGH, baz, "in baz");
 
+  Task *realTask2 =  new Task(TaskPriority::MEDIUM);
+  realTask2->Bind(&Yahoo::Bar, &y, 3.1416f, "mofo");
 
-  TaskEngine::GetInstance().LaunchTask(BaseTaskPtr(&task));
+  TaskEngine::GetInstance()->LaunchTask(BaseTaskPtr(&task));
+//  TaskEngine::GetInstance()->LaunchTask(BaseTaskPtr(realTask2));
+  int i = 0;
+  while (i < 1000000) ++i;
+
+  y.Bar(0.1f, "yoyo");
 
   return 0;
 }

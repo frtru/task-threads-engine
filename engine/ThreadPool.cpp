@@ -34,7 +34,8 @@ ThreadPool::WorkerThread::~WorkerThread() {
 }
 
 ThreadPool::ThreadPool(unsigned int poolSize)
-  : m_workers(poolSize) {
+  : m_workers(poolSize)
+  , m_scheduler(new Scheduler(this)) {
   for (WorkerThread& worker : m_workers) {
     worker.Start();
   }
