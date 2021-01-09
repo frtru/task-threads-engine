@@ -12,6 +12,9 @@ struct Task;
 
 class ThreadPool
 {
+  // TODO: Maybe add a thread for the scheduler sync with global timers
+  // or something else, but it basically would send routines to the
+  // worker threads.
   class Scheduler
   {
   public:

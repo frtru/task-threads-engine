@@ -49,7 +49,12 @@ struct Task {
 
   inline void Run() { proc(); }
 
+  // TODO: Put children tasks here as a list
+  // and queue just after proc() is called in Run
+
   FunctionWrapper proc;
+
+  // TODO: Decide whether or not I'll use priorities
   TaskPriority    prio;
 };
 
@@ -61,14 +66,19 @@ public:
     std::size_t  TaskPoolSize    = 500u);
 
   void LaunchTask(Task* task);
+  void RegisterRoutine(Task* task);
+
+  void Update();
 
   static bool LinkSuccessful() { return true; }
 
 private:
+  //TODO: Make this a builder, pool, allocator thingy
 //  std::unique_ptr<Task> m_TaskPool; <<---- LOST LOT OF TIME CAUSE THIS WAS CRASHING POST-MAIN
 //                                           THIS IS SUPPOSED TO BE A TASK POOL FROM WHICH WE CREATE TASKS
 //                                           INSTEAD OF NEW'ING ALL THE TIME
   std::unique_ptr<ThreadPool> m_ThreadPool;
+  std::vector<Task*>          m_Routines;
 };
 } // namespace engine
 } // namespace os

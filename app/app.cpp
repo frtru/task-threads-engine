@@ -1,7 +1,9 @@
 #include "engine/TaskEngine.h"
 
+#include <chrono>
 #include <iostream>
 #include <string>
+#include <thread>
 
 using namespace engine::threading;
 
@@ -30,15 +32,19 @@ int main(int argc, char* argv[])
   Task *realTask2 =  new Task(TaskPriority::HIGH);
   realTask2->Bind(baz, "mofo");
 
-  TaskEngine::GetInstance()->LaunchTask(realTask);
-  TaskEngine::GetInstance()->LaunchTask(realTask2);
+  TaskEngine::GetInstance()->RegisterRoutine(realTask);
+  TaskEngine::GetInstance()->RegisterRoutine(realTask2);
 
   y.Bar(0.1f, "yoyo");
 
+  while (true) {
+    using namespace std::chrono_literals;
+    TaskEngine::GetInstance()->Update();
+    std::this_thread::sleep_for(1000ms);
+  }
+
   delete realTask;
   delete realTask2;
-
-  while (true);
 
   return 0;
 }
