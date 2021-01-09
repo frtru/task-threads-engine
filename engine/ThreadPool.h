@@ -1,13 +1,14 @@
 #pragma once
 
-#include "Tasks.h"
-
+#include <iostream>
 #include <mutex>
 #include <queue>
 #include <vector>
 #include <thread>
 
 namespace engine { namespace threading {
+
+struct Task;
 
 class ThreadPool
 {
@@ -17,7 +18,7 @@ class ThreadPool
     Scheduler(ThreadPool* poolRef)
       : m_poolRef(poolRef) {}
 
-    void AssignTaskToThread(BaseTaskPtr&& task);
+    void AssignTaskToThread(Task* task);
 
   private:
     ThreadPool* m_poolRef;
@@ -35,7 +36,7 @@ class ThreadPool
 
     std::unique_ptr<std::thread> m_thread;
     std::condition_variable      m_condition;
-    std::queue<BaseTaskPtr>      m_tasks;
+    std::queue<Task*>            m_tasks;
     std::mutex                   m_queueMutex;
     static bool                  s_stop;
   };
@@ -43,13 +44,13 @@ class ThreadPool
 public:
   ThreadPool(unsigned int poolSize = std::thread::hardware_concurrency());
 
-  void EnqueueTask(BaseTaskPtr&& task) {
-    m_scheduler->AssignTaskToThread(std::move(task));
+  void EnqueueTask(Task* task) {
+    m_scheduler->AssignTaskToThread(task);
   }
 
 private:
-  std::vector<WorkerThread> m_workers;
-  std::unique_ptr<Scheduler> m_scheduler;
+  std::vector<WorkerThread>   m_workers;
+  std::unique_ptr<Scheduler>  m_scheduler;
 };
 } // namespace threading
 } // namespace engine

@@ -1,5 +1,7 @@
 #include "ThreadPool.h"
 
+#include "TaskEngine.h"
+
 using namespace engine::threading;
 
 bool ThreadPool::WorkerThread::s_stop = false;
@@ -7,7 +9,7 @@ bool ThreadPool::WorkerThread::s_stop = false;
 void ThreadPool::WorkerThread::Start() {
   m_thread = std::make_unique<std::thread>([this]() {
     for (;;) {
-      BaseTaskPtr task;
+      Task* task;
       {
         std::unique_lock<std::mutex> lock(this->m_queueMutex);
         this->m_condition.wait(lock, [this]() {
@@ -15,7 +17,7 @@ void ThreadPool::WorkerThread::Start() {
         });
         if (this->s_stop)
           return;
-        task = std::move(this->m_tasks.front());
+        task = this->m_tasks.front();
         this->m_tasks.pop();
       }
 
@@ -41,7 +43,7 @@ ThreadPool::ThreadPool(unsigned int poolSize)
   }
 }
 
-void ThreadPool::Scheduler::AssignTaskToThread(BaseTaskPtr&& task) {
+void ThreadPool::Scheduler::AssignTaskToThread(Task* task) {
   // We dont really need to lock to get the size of the queue
   // for a given thread, since the moment we iterate to the next
   // it's gonna be invalid anyways and this is only to get a
@@ -57,6 +59,6 @@ void ThreadPool::Scheduler::AssignTaskToThread(BaseTaskPtr&& task) {
   );
 
   std::unique_lock<std::mutex> lock(it->m_queueMutex);
-  it->m_tasks.emplace(std::move(task));
+  it->m_tasks.emplace(task);
   it->m_condition.notify_one();
 }

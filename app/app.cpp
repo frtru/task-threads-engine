@@ -1,5 +1,4 @@
 #include "engine/TaskEngine.h"
-#include "engine/Tasks.h"
 
 #include <iostream>
 #include <string>
@@ -23,25 +22,23 @@ struct Yahoo
 
 int main(int argc, char* argv[])
 {
-
   Yahoo y;
 
-  TaskPtr realTask = TaskPtr(new Task(TaskPriority::MEDIUM));
+  Task* realTask = new Task(TaskPriority::MEDIUM);
   realTask->Bind(&Yahoo::Bar, &y, 1.23f, "string");
 
-  MacroTask<PriorityTaskQueue> task(TaskPriority::HIGH);
-  task.Add(std::move(realTask));
-  task.Add(TaskPriority::HIGH, baz, "in baz");
+  Task *realTask2 =  new Task(TaskPriority::HIGH);
+  realTask2->Bind(baz, "mofo");
 
-  Task *realTask2 =  new Task(TaskPriority::MEDIUM);
-  realTask2->Bind(&Yahoo::Bar, &y, 3.1416f, "mofo");
-
-  TaskEngine::GetInstance()->LaunchTask(BaseTaskPtr(&task));
-//  TaskEngine::GetInstance()->LaunchTask(BaseTaskPtr(realTask2));
-  int i = 0;
-  while (i < 1000000) ++i;
+  TaskEngine::GetInstance()->LaunchTask(realTask);
+  TaskEngine::GetInstance()->LaunchTask(realTask2);
 
   y.Bar(0.1f, "yoyo");
+
+  delete realTask;
+  delete realTask2;
+
+  while (true);
 
   return 0;
 }
