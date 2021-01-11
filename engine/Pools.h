@@ -78,3 +78,69 @@ private:
   std::stack<Type*> m_pool;
 };
 
+// NOTE: For simplicity, Type will require a default
+// constructor implementation. TODO: check with args forwarding
+// if we can do something
+template<typename Type>
+class ResizableContiguousPool
+{
+public:
+  ResizableContiguousPool(std::size_t itemCount)
+    : m_pool(std::vector<Type>(itemCount)) {}
+  //delete all of the available memory chunks:
+  ~ResizableContiguousPool() {
+    // Let the vector do its job
+  }
+
+  ResizableContiguousPool(const ResizableContiguousPool &) = delete;
+  ResizableContiguousPool(ResizableContiguousPool && other)
+    : m_pool(std::move(other.m_pool)) {}
+
+  ResizableContiguousPool& operator=(const ResizableContiguousPool&) = delete;
+  ResizableContiguousPool& operator=(ResizableContiguousPool&& other) {
+    this->m_pool(std::move(other.m_pool));
+  }
+
+  // Create an instance of Type:
+  template<typename... Args>
+  Type* Create(Args && ...args) {
+    Type *place = (Type*)(Allocate());
+
+    try {
+      new (place) Type(std::forward<Args>(args)...);
+    }
+    catch (...) {
+      m_pool.push(*place);
+      throw;
+    }
+
+    return place;
+  }
+
+  // Remove an instance of Type (add memory to the pool):
+  void Remove(Type* obj) {
+    // TODO:
+  }
+
+  // Allocate a chunk of memory as big as Type needs:
+  Type* Allocate() {
+    Type *place;
+
+    // TODO:
+
+    return place;
+  }
+
+  //Keeping as a utility
+  void Deallocate(Type* obj) {
+    // TODO:
+  }
+
+  std::size_t FreeChunksCount() {
+    return m_pool.size();
+  }
+
+private:
+
+  std::stack<Type, std::vector<Type> > m_pool;
+};
