@@ -53,7 +53,7 @@ public:
     Type *place = Allocate();
 
     try {
-      new (place) Type(std::forward<Args>(args)...);
+      ::new (place) Type(std::forward<Args>(args)...);
     }
     catch (...) {
       m_pool.push(place);
