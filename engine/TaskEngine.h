@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Pools.h"
 #include "Singleton.h"
 #include "ThreadPool.h"
 
@@ -18,7 +19,11 @@ enum TaskPriority : unsigned char {
   CRITICAL
 };
 
-struct Task {
+#ifndef MAX_SIMULTANEOUS_RUNTIME_TASK_COUNT
+#define MAX_SIMULTANEOUS_RUNTIME_TASK_COUNT 500
+#endif
+
+struct Task : public PoolableObject<MAX_SIMULTANEOUS_RUNTIME_TASK_COUNT, Task> {
   using FunctionWrapper = std::function<void()>;
   using Ptr = Task*;
 
@@ -61,11 +66,17 @@ struct Task {
 class TaskEngine : public Singleton<TaskEngine>
 {
 public:
-  TaskEngine(
-    unsigned int numberOfThreads = std::thread::hardware_concurrency(),
-    std::size_t  TaskPoolSize    = 500u);
+  TaskEngine(unsigned int numberOfThreads = std::thread::hardware_concurrency());
 
   void LaunchTask(Task* task);
+  
+  //template <typename Func, typename ...Args>
+  //void LaunchTask(TaskPriority prio, Func&& f, Args&&... args) {
+  //  Task *task = m_TaskPool.Create(prio);
+  //  task->Bind(f, ...args);
+  //  LaunchTask(task);
+  //}
+
   void RegisterRoutine(Task* task);
 
   void Update();
@@ -73,10 +84,9 @@ public:
   static bool LinkSuccessful() { return true; }
 
 private:
-  //TODO: Make this a builder, pool, allocator thingy
-//  std::unique_ptr<Task> m_TaskPool; <<---- LOST LOT OF TIME CAUSE THIS WAS CRASHING POST-MAIN
-//                                           THIS IS SUPPOSED TO BE A TASK POOL FROM WHICH WE CREATE TASKS
-//                                           INSTEAD OF NEW'ING ALL THE TIME
+  // NOTE: not the job of the engine to own the task pool
+  // as releasing them would be super complicated to manage
+  // for little to no reason.
   std::unique_ptr<ThreadPool> m_ThreadPool;
   std::vector<Task*>          m_Routines;
 };

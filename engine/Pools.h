@@ -20,6 +20,11 @@
 // ---  No cache locality (non-contiguous allocations)
 // ---  Doesnt prevent fragmentation
 // --   Cannot allocate blocks (although it could be implemented)
+
+#include <stack>
+#include <type_traits>
+#include <vector>
+
 template<typename Type>
 class DynamicPointerPool
 {
@@ -143,12 +148,13 @@ public:
       else
         return nullptr;
     }
-    return new (Allocate()) Type(std::forward<Args>(args)...);
+    return ::new (Allocate()) Type(std::forward<Args>(args)...);
   }
 
   // Replace the pointed object and inserts a COPY
   // of the object into the vector. Which means objects
   // must be copy-able to use this method.
+  // TODO: Protect against multiple release of same object
   void Release(Type* obj) {
     obj->~Type();
     m_pool.push(*obj);
@@ -177,20 +183,33 @@ private:
   std::stack<Type, std::vector<Type> > m_pool;
 };
 
-// TODO: Draft of PoolableObject if ever necessary
-//
-//template <std::size_t PoolSize, PoolType = ObjectPool>
-//class PoolableObject
-//{
-//public:
-//  static void* operator new(std::size_t count) {
-//
-//  }
-//
-//  static void* operator new(std::size_t count) {
-//
-//  }
-//
-//protected:
-//  static PoolType<PoolableObject> s_pool;
-//};
+template <std::size_t PoolSize, 
+  typename Type,
+  typename PoolType = ObjectPool<Type, false> >
+class PoolableObject
+{
+public:
+
+  template<typename... Args>
+  static void* operator new(std::size_t count, Args&&... args) {
+    return s_pool.Create(args...);
+  }
+
+  //NOTE: Just to get rid of warning C4291
+  template<typename... Args>
+  static void operator delete(void* object, Args&&...) {
+    s_pool.Release(static_cast<Type*>(object));
+  }
+
+  static void operator delete(void* object) {
+    s_pool.Release(static_cast<Type*>(object));
+  }
+
+protected:
+  static PoolType s_pool;
+};
+
+template <std::size_t PoolSize,
+  typename Type,
+  typename PoolType = ObjectPool<Type, false> >
+PoolType PoolableObject<PoolSize, Type, PoolType>::s_pool(PoolSize);

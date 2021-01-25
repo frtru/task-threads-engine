@@ -1,3 +1,4 @@
+#define MAX_SIMULTANEOUS_RUNTIME_TASK_COUNT 600
 #include "engine/TaskEngine.h"
 #include "engine/Pools.h"
 

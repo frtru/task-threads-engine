@@ -12,11 +12,14 @@ void ThreadPool::WorkerThread::Start() {
       Task* task;
       {
         std::unique_lock<std::mutex> lock(this->m_queueMutex);
+
         this->m_condition.wait(lock, [this]() {
           return !m_tasks.empty() || s_stop;
         });
+
         if (this->s_stop)
           return;
+
         task = this->m_tasks.front();
         this->m_tasks.pop();
       }
@@ -31,6 +34,7 @@ ThreadPool::WorkerThread::~WorkerThread() {
     std::unique_lock<std::mutex> lock(this->m_queueMutex);
     s_stop = true;
   }
+
   m_condition.notify_all();
   m_thread->join();
 }

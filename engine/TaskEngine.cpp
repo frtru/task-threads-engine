@@ -2,7 +2,7 @@
 
 using namespace engine::threading;
 
-TaskEngine::TaskEngine(unsigned int numberOfThreads, std::size_t TaskPoolSize)
+TaskEngine::TaskEngine(unsigned int numberOfThreads)
   : m_ThreadPool(new ThreadPool(numberOfThreads))
 //  , m_TaskPool(new Task[TaskPoolSize])
 {
