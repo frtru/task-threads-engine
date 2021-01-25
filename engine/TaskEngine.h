@@ -32,9 +32,9 @@ struct Task : public PoolableObject<MAX_SIMULTANEOUS_RUNTIME_TASK_COUNT, Task> {
 
   // We wrap the function and arguments passed
   // into a a pointer for std::function<void()>.
-  // This is pointer is copied as a capture in 
-  // the member variable that will then execute
-  // the actual function.
+  // This pointer is copied as a capture in the
+  // member variable that will then execute the
+  // actual function.
   //
   // Were we interested of getting the actual
   // return of the functions, we could use a 
@@ -69,16 +69,7 @@ public:
   TaskEngine(unsigned int numberOfThreads = std::thread::hardware_concurrency());
 
   void LaunchTask(Task* task);
-  
-  //template <typename Func, typename ...Args>
-  //void LaunchTask(TaskPriority prio, Func&& f, Args&&... args) {
-  //  Task *task = m_TaskPool.Create(prio);
-  //  task->Bind(f, ...args);
-  //  LaunchTask(task);
-  //}
-
   void RegisterRoutine(Task* task);
-
   void Update();
 
   static bool LinkSuccessful() { return true; }
